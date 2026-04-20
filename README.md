@@ -139,8 +139,31 @@ End-to-end scenarios with fixture files and expected results in `showcases/`:
 | 03 | One transaction covering two invoices | Rule 6 |
 | 04 | Missing transaction uploaded mid-review | Rule 7 (re-run) |
 | 05 | Credit note netting — single net payment | Rule 6 |
+| 06 | FX difference — EUR invoice paid in GBP | Rule 8 / needs_review |
+| 07 | Garbage input — wrong extension, broken JSON, wrong CSV columns | Ingestion validation |
+| 08 | Missing required fields — no `id`, no `customer_id`, no `date` | Ingestion validation |
+| 09 | Stripe payout decomposition — 5 charges + refund + chargeback | Rule 3 |
+| 10 | Valid structure, garbage data — `"€585,00"`, `15/03/2026`, MOON currency | Ingestion / Rule 10 |
+| 11 | AI matching — all rules fail, Claude API fires | Rule 9 |
+| 12 | Full EasyBiz dataset — 80 transactions, 50 invoices, 1 payout CSV | All rules |
+| 13 | Duplicate re-import — `[RE-IMPORTED]` prefix, invoice paid once | Rule 2 |
+| 14 | Idempotency — running reconciliation N times yields identical state | delete-then-create |
 
-Each showcase folder contains `invoices.json`, `transactions.json`, and a `README.md` with step-by-step instructions.
+Each showcase folder contains fixture files and a `README.md` with step-by-step instructions and expected results.
+
+---
+
+## Not yet covered / future work
+
+These edge cases were identified during planning but deferred due to time constraints:
+
+| Case | Why deferred |
+|---|---|
+| **Over/underpayment handling** | Requires configurable tolerance thresholds per customer and a partial-allocation model (e.g. post remaining balance to a suspense account) |
+| **Garbled invoice references** | Regex extraction (Rule 8) handles common variants; fully arbitrary formats (e.g. `"facture no 41 février"`) require AI and a training set |
+| **Payment-provider payouts (Stripe-style) — full lifecycle** | Rule 3 handles basic decomposition; disputes, partial captures, and multi-currency settlements need a dedicated payout reconciliation flow |
+| **Prepayments** | Transaction arrives before the invoice exists; needs a "pending" holding state and re-trigger when the invoice is later ingested |
+| **Unrelated noise classification** | Rule 1 uses a hardcoded keyword list; a production system needs a maintained taxonomy per customer (payroll providers, landlords, utilities) |
 
 ---
 
@@ -154,4 +177,14 @@ Each showcase folder contains `invoices.json`, `transactions.json`, and a `READM
 - **Pagination** — list endpoints return all records with no pagination limit beyond Django Admin's 200-row cap.
 - **Email / webhook notifications** — no alerts when matches need review or reconciliation completes.
 - **Audit log for manual actions** — `performed_by` / `performed_at` fields exist on `Match` but are not surfaced in the Admin dashboard.
+
+## Known backend issues (low priority / future fixes)
+
+| Issue | Location | Impact |
+|---|---|---|
+| `mark_unrelated` note is optional — spec says mandatory | `manual_service.py`, `MatchActionSerializer` | Reviewer can skip justification |
+| Manual match creation doesn't validate invoice is open | `manual_service.py:create_manual_match` | API allows matching against a paid invoice |
+| `Transaction.reconciliation_status` never becomes `"confirmed"` — stays `"auto_matched"` after human confirmation | `manual_service.py:_derive_txn_status` | Dashboard can't distinguish confirmed vs auto |
+| Rule 8 and Rule 10 use `match_type="exact"` for fuzzy/no-match cases | `reconciliation_service.py` | Misleading match type label in API output |
+| Rule 8 fuzzy loads all open invoices per transaction (N+1 risk at scale) | `reconciliation_service.py:_rule8_fuzzy` | Fine for ≤200 invoices; degrades beyond |
 

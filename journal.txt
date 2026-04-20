@@ -52,11 +52,20 @@ Implementation of Django App
 14:00
     - AI Scoring case
 
-[TODO] 13:00 - 14:00
-- Implementing AI Scoring module
+14:10
+    - Showcases  11
+    - Showcases  12
+    - Showcases  13
+14:20
+    - Showcase 14
+    - Updated Readme, finalizing showcases, declaring what is not in scope (run out of time)
+14:22
+    - Reviewing backend codebase
+    - fixing critical bugs
+    - updating readme
 
-[TODO] 14:00 - 15:00
-Implementing Frontend React app
+14:35 Creating frontend app
+
 
 [TODO] 14:30 - 15:00
 Test app manually, update readme and guides

@@ -218,7 +218,11 @@ class Invoice(models.Model):
             .aggregate(total=Sum("allocated_amount"))["total"]
             or 0
         )
-        if allocated == 0:
+        if self.total <= 0:
+            # Credit notes have negative totals; they are settled by Rule 6 consolidated matches.
+            # Avoid the 0 >= negative_total false-positive that would mark them paid immediately.
+            self.status = "paid" if allocated > 0 else "open"
+        elif allocated == 0:
             self.status = "open"
         elif allocated >= self.total:
             self.status = "paid"
