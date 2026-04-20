@@ -45,7 +45,10 @@ Implementation of Django App
     - Creating showcase 08
 13:50
     - Creating showcase 09
-
+13:54
+    - Adding Redoc / Swagger
+13:56
+    - Adding showcase 10
 
 
 [TODO] 13:00 - 14:00
