@@ -10,12 +10,18 @@ Adding Reviewer Model, Source model
 
 
 
-[TODO] 11:00 - 13:00
+11:00 - 13:00
 Implementation of Django App
 11:00
     - Creating base Django Project
 11:05
     - Creating django Models and base user
+11:20
+    - Creating API endpoints (Viewsets, serializers)
+    - Create local server & docker compose
+11:30
+    - Creating API endpoints for file ingest
+
 
 [TODO] 13:00 - 14:00
 - Implementing AI Scoring module

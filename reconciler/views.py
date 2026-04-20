@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reconciler.ingestion_service import ingest_invoices, ingest_payout, ingest_transactions
+from reconciler.reconciliation_service import run_reconciliation
 
 from reconciler.filters import (
     AccountEntryFilter,
@@ -343,3 +344,34 @@ class IngestPayoutView(APIView):
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Reconciliation trigger
+# ---------------------------------------------------------------------------
+
+@extend_schema(
+    summary="Run reconciliation engine",
+    description=(
+        "Processes all unlocked transactions through the 10-rule matching engine. "
+        "Locked transactions (locked_by_user=true) are skipped. "
+        "Idempotent — running twice on unchanged data produces the same result."
+    ),
+    request=None,
+    responses={200: ReconciliationRunSerializer},
+)
+class ReconcileView(APIView):
+    """Trigger a full reconciliation run over all unlocked transactions."""
+
+    def post(self, request):
+        """Run the reconciliation engine and return the completed ReconciliationRun record.
+
+        Returns:
+            200: ReconciliationRun summary (total_processed, auto_matched_count, etc.)
+            500: {"detail": "<error message>"} if the run fails unexpectedly.
+        """
+        try:
+            run = run_reconciliation()
+        except Exception as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(ReconciliationRunSerializer(run).data, status=status.HTTP_200_OK)
