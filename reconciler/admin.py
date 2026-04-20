@@ -280,7 +280,35 @@ class TransactionAdmin(admin.ModelAdmin):
         if request.method == "POST":
             action = request.POST.get("action")
             match_id = request.POST.get("match_id")
-            if action and match_id:
+
+            if action == "upload_and_reconcile":
+                f = request.FILES.get("file")
+                if not f:
+                    messages.error(request, "No file selected.")
+                elif f.size > MAX_UPLOAD_BYTES:
+                    messages.error(request, f"File too large ({f.size} bytes). Max 20 MB.")
+                else:
+                    ext = f.name.rsplit(".", 1)[-1].lower() if "." in f.name else ""
+                    try:
+                        raw = f.read().decode("utf-8")
+                        if ext == "json":
+                            summary = ingest_transactions(raw, f.name)
+                        elif ext == "csv":
+                            summary = ingest_payout(raw, f.name)
+                        else:
+                            raise ValueError(f"Unsupported file type '.{ext}'. Expected .json or .csv.")
+                        detail = ", ".join(f"{k}: {v}" for k, v in summary.items())
+                        messages.success(request, f"Uploaded {f.name} — {detail}")
+                        run = run_reconciliation()
+                        messages.success(
+                            request,
+                            f"Reconciliation complete — {run.total_processed} processed, "
+                            f"{run.auto_matched_count} auto-matched, {run.needs_review_count} need review.",
+                        )
+                    except Exception as exc:
+                        messages.error(request, str(exc))
+
+            elif action and match_id:
                 try:
                     match = Match.objects.get(pk=match_id)
                     if action == "confirm":
@@ -304,9 +332,36 @@ class TransactionAdmin(admin.ModelAdmin):
                 redirect_url += "?" + urlencode(params)
             return HttpResponseRedirect(redirect_url)
 
-        date_from = request.GET.get("date_from", "")
-        date_to = request.GET.get("date_to", "")
+        from datetime import date
+        from django.db.models import Min, Q
+
+        today = date.today()
         customer_id = request.GET.get("customer", "")
+        customer_obj = Customer.objects.filter(customer_id=customer_id).first() if customer_id else None
+
+        # Customer filter — built once, reused for both the min-date lookup and the main queries.
+        # needs_review: OR with raw_counterparty because unmatched matches have invoice=null.
+        # reconciled: strict invoice→customer path only.
+        if customer_obj:
+            by_invoice = Q(invoice__customer__customer_id=customer_id)
+            by_counterparty = Q(invoice__isnull=True, transaction__raw_counterparty__icontains=customer_obj.name)
+            needs_review_filter = by_invoice | by_counterparty
+            reconciled_filter = by_invoice
+        else:
+            needs_review_filter = Q()
+            reconciled_filter = Q()
+
+        # Default date_from: earliest transaction date visible under the current customer filter.
+        if request.GET.get("date_from"):
+            date_from = request.GET["date_from"]
+        else:
+            earliest = (
+                Match.objects.filter(needs_review_filter | reconciled_filter)
+                .aggregate(min_date=Min("transaction__date"))["min_date"]
+            )
+            date_from = earliest.isoformat() if earliest else today.isoformat()
+
+        date_to = request.GET.get("date_to") or today.isoformat()
 
         base_qs = Match.objects.select_related(
             "transaction", "transaction__currency",
@@ -316,14 +371,14 @@ class TransactionAdmin(admin.ModelAdmin):
             base_qs = base_qs.filter(transaction__date__gte=date_from)
         if date_to:
             base_qs = base_qs.filter(transaction__date__lte=date_to)
-        if customer_id:
-            base_qs = base_qs.filter(invoice__customer_id=customer_id)
 
         needs_review = list(
-            base_qs.filter(status="needs_review").order_by("transaction__date", "transaction_id")[:200]
+            base_qs.filter(status="needs_review").filter(needs_review_filter)
+            .order_by("transaction__date", "transaction_id")[:200]
         )
         reconciled = list(
             base_qs.filter(status__in=["auto_matched", "confirmed", "manually_matched"])
+            .filter(reconciled_filter)
             .order_by("-transaction__date")[:200]
         )
         customers = Customer.objects.order_by("name")

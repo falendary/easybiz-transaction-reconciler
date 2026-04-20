@@ -219,7 +219,7 @@ class Rule5FXTest(TestCase):
 # ---------------------------------------------------------------------------
 
 class Rule6ConsolidatedTest(TestCase):
-    def test_multiple_ids_in_description_split_proportionally(self):
+    def test_multiple_ids_exact_sum_auto_matched(self):
         make_invoice(invoice_id="INV-2026-0010", total="100.00")
         make_invoice(invoice_id="INV-2026-0011", total="200.00")
         txn = make_transaction(
@@ -229,12 +229,25 @@ class Rule6ConsolidatedTest(TestCase):
         )
         run_reconciliation()
         txn.refresh_from_db()
-        self.assertEqual(txn.reconciliation_status, "needs_review")
+        self.assertEqual(txn.reconciliation_status, "auto_matched")
         matches = Match.objects.filter(transaction=txn)
         self.assertEqual(matches.count(), 2)
         self.assertTrue(all(m.match_type == "consolidated" for m in matches))
-        total_allocated = sum(m.allocated_amount for m in matches)
-        self.assertEqual(total_allocated, Decimal("300.00"))
+        self.assertEqual(sum(m.allocated_amount for m in matches), Decimal("300.00"))
+
+    def test_multiple_ids_partial_sum_needs_review(self):
+        make_invoice(invoice_id="INV-2026-0012", total="100.00")
+        make_invoice(invoice_id="INV-2026-0013", total="200.00")
+        txn = make_transaction(
+            transaction_id="TXN-CONS2",
+            amount="250.00",  # less than 100+200=300 → needs_review
+            description="Payment for INV-2026-0012 and INV-2026-0013",
+        )
+        run_reconciliation()
+        txn.refresh_from_db()
+        self.assertEqual(txn.reconciliation_status, "needs_review")
+        matches = Match.objects.filter(transaction=txn)
+        self.assertEqual(matches.count(), 2)
 
 
 # ---------------------------------------------------------------------------

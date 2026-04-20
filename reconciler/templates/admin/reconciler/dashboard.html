@@ -23,6 +23,8 @@
   .recon-table th { background:#417690; color:#fff; padding:8px 10px; text-align:left; white-space:nowrap; }
   .recon-table td { padding:7px 10px; border-bottom:1px solid #eee; vertical-align:middle; }
   .recon-table tr:hover td { background:#f5f9fc; }
+  .recon-table tr.row-matched td { background:#f0faf3; }
+  .recon-table tr.row-matched:hover td { background:#e4f5e9; }
 
   .badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:bold; white-space:nowrap; }
   .badge-needs_review  { background:#fff3cd; color:#856404; }
@@ -45,6 +47,12 @@
   .btn-edit     { background:#0d6efd; color:#fff; padding:3px 10px; border-radius:3px; font-size:12px; text-decoration:none; display:inline-block; }
 
   .empty-msg { padding:20px; text-align:center; color:#888; font-style:italic; }
+
+  .upload-bar { display:flex; align-items:center; gap:12px; background:#f0f7ff; border:1px solid #b8d4f0; border-radius:4px; padding:10px 16px; margin-bottom:20px; flex-wrap:wrap; }
+  .upload-bar label { font-size:13px; font-weight:bold; color:#333; white-space:nowrap; }
+  .upload-bar input[type=file] { font-size:13px; }
+  .upload-bar .btn-upload { background:#0d6efd; color:#fff; border:none; padding:6px 16px; border-radius:3px; cursor:pointer; font-size:13px; white-space:nowrap; }
+  .upload-bar .hint { font-size:11px; color:#666; }
 </style>
 {% endblock %}
 
@@ -78,6 +86,16 @@
   </div>
 </form>
 
+{# ── Upload & Reconcile ── #}
+<form method="post" enctype="multipart/form-data" action="{% url 'admin:reconciler-dashboard' %}{% if filter_date_from or filter_date_to or filter_customer %}?date_from={{ filter_date_from }}&date_to={{ filter_date_to }}&customer={{ filter_customer }}{% endif %}" class="upload-bar">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="upload_and_reconcile">
+  <label for="dash-file">↑ Upload &amp; Reconcile</label>
+  <input type="file" id="dash-file" name="file" accept=".json,.csv" required>
+  <button type="submit" class="btn-upload">Upload &amp; run</button>
+  <span class="hint">transactions.json or payout_report.csv — reconciliation runs automatically after upload</span>
+</form>
+
 {# ── Table 1: Needs Review ── #}
 <div class="recon-section">
   <h2>Needs Review</h2>
@@ -99,6 +117,7 @@
         <th>Confidence</th>
         <th>Note</th>
         <th>Actions</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -150,6 +169,9 @@
             <button name="action" value="unrelated" class="btn-unrelated" title="Mark as unrelated">~ Unrelated</button>
           </form>
         </td>
+        <td>
+          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit" title="Edit match #{{ match.pk }}">#{{ match.pk }}</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -185,7 +207,7 @@
     </thead>
     <tbody>
       {% for match in reconciled %}
-      <tr>
+      <tr class="row-matched">
         <td>{{ match.transaction.date }}</td>
         <td>
           <a href="{% url 'admin:reconciler_transaction_change' match.transaction.pk %}">
@@ -217,7 +239,7 @@
           {% endwith %}
         </td>
         <td>
-          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit">Edit</a>
+          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit">#{{ match.pk }} Edit</a>
         </td>
       </tr>
       {% endfor %}
