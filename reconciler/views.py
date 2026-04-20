@@ -1,9 +1,13 @@
 from django.db import connection
 from django.db.utils import OperationalError
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import api_view
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from reconciler.ingestion_service import ingest_invoices, ingest_payout, ingest_transactions
 
 from reconciler.filters import (
     AccountEntryFilter,
@@ -246,3 +250,96 @@ class ReconciliationRunViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 
     queryset = ReconciliationRun.objects.order_by("-started_at")
     serializer_class = ReconciliationRunSerializer
+
+
+# ---------------------------------------------------------------------------
+# File upload (ingestion)
+# ---------------------------------------------------------------------------
+
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+def _read_upload(request, allowed_extensions: list[str]) -> tuple[str, str]:
+    """Extract and validate an uploaded file from the request.
+
+    Returns:
+        (raw_content, filename) tuple
+
+    Raises:
+        ValueError: if file is missing, too large, or has wrong extension
+    """
+    file = request.FILES.get("file")
+    if not file:
+        raise ValueError("No file provided. Send the file as multipart/form-data with key 'file'.")
+    if file.size > MAX_UPLOAD_BYTES:
+        raise ValueError(f"File too large ({file.size} bytes). Maximum is 20 MB.")
+    ext = file.name.rsplit(".", 1)[-1].lower() if "." in file.name else ""
+    if ext not in allowed_extensions:
+        raise ValueError(f"Unsupported file type '.{ext}'. Expected: {allowed_extensions}.")
+    return file.read().decode("utf-8"), file.name
+
+
+@extend_schema(
+    summary="Upload invoices JSON",
+    description="Accepts invoices.json. Upserts on invoice_id — re-uploading is safe.",
+    request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+    responses={200: {"type": "object"}},
+)
+class IngestInvoicesView(APIView):
+    """Upload and parse invoices.json. Idempotent on invoice_id."""
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        """Accept invoices.json, upsert all records, return ingestion summary."""
+        try:
+            raw_content, filename = _read_upload(request, ["json"])
+            result = ingest_invoices(raw_content, filename)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    summary="Upload transactions JSON",
+    description="Accepts transactions.json. Upserts on transaction_id. [RE-IMPORTED] prefix sets is_duplicate=true.",
+    request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+    responses={200: {"type": "object"}},
+)
+class IngestTransactionsView(APIView):
+    """Upload and parse transactions.json. Idempotent on transaction_id."""
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        """Accept transactions.json, upsert all records, return ingestion summary."""
+        try:
+            raw_content, filename = _read_upload(request, ["json"])
+            result = ingest_transactions(raw_content, filename)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    summary="Upload Stripe payout CSV",
+    description=(
+        "Accepts a Stripe payout CSV. Links each charge line to its parent Transaction "
+        "via the payout ID in structured_reference. Transactions must be uploaded first."
+    ),
+    request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+    responses={200: {"type": "object"}},
+)
+class IngestPayoutView(APIView):
+    """Upload and parse payout_report.csv. Idempotent on charge_id."""
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        """Accept payout CSV, create PayoutLine records linked to parent transaction."""
+        try:
+            raw_content, filename = _read_upload(request, ["csv"])
+            result = ingest_payout(raw_content, filename)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result, status=status.HTTP_200_OK)
