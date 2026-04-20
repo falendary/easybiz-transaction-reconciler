@@ -19,6 +19,7 @@ class TransactionFilter(django_filters.FilterSet):
 
 class MatchFilter(django_filters.FilterSet):
     transaction_id = django_filters.CharFilter(field_name="transaction__transaction_id")
+    status = django_filters.MultipleChoiceFilter(choices=Match.STATUS_CHOICES)
 
     class Meta:
         model = Match

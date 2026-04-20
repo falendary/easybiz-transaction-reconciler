@@ -16,4 +16,5 @@ questions.md
 transactions.json
 task.pdf
 payout_report.csv
-
+frontend/node_modules
+frontend/dist

@@ -33,15 +33,19 @@ class CustomerInlineSerializer(serializers.ModelSerializer):
 
 
 class InvoiceInlineSerializer(serializers.ModelSerializer):
+    customer = CustomerInlineSerializer(read_only=True)  # defined above
+
     class Meta:
         model = Invoice
-        fields = ["id", "invoice_id", "total", "status"]
+        fields = ["id", "invoice_id", "total", "status", "customer"]
 
 
 class TransactionInlineSerializer(serializers.ModelSerializer):
+    currency = serializers.StringRelatedField()
+
     class Meta:
         model = Transaction
-        fields = ["id", "transaction_id", "amount", "date"]
+        fields = ["id", "transaction_id", "amount", "date", "currency", "raw_counterparty", "structured_reference"]
 
 
 class AccountInlineSerializer(serializers.ModelSerializer):
