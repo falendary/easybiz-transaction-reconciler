@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:reconciler-dashboard' %}" class="button" style="background:#417690;color:#fff;padding:6px 15px;border-radius:4px;font-size:13px;text-decoration:none">
+      ⊞ Reconciliation Dashboard
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}

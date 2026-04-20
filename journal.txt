@@ -26,7 +26,8 @@ Implementation of Django App
     - Manual testing
 11:50
     - Creating API endpoints for manual review
-
+12:00
+    - Creating Django Admin Dashboard/Homepage to user to reconcile data
 
 
 [TODO] 13:00 - 14:00
