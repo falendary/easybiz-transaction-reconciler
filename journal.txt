@@ -70,7 +70,8 @@ Implementation of Django App
 14:30 Creating frontend app
 14:40 Debugging frontend
 14:45 Manual Testing
-
+14:48 Updating Readme and docker-compose command
+14:53 Updating docker-compose
 
 [TODO] 14:30 - 15:00
 Test app manually, update readme and guides

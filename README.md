@@ -43,27 +43,29 @@ A Django REST API that ingests invoices, bank transactions, and Stripe payout re
 
 ## Running locally
 
-### Prerequisites
-
-- Docker + Docker Compose
-- Python 3.11 (for running outside Docker)
-
-### With Docker
+### Docker (recommended — one command)
 
 ```bash
-cp .env.example .env          # adjust if needed
+git clone <repo-url>
+cd easybiz-transaction-reconciler
 docker compose up --build
-docker compose exec web venv/bin/python manage.py migrate
-docker compose exec web venv/bin/python manage.py loaddata currencies sources
-docker compose exec web venv/bin/python manage.py createsuperuser
 ```
+
+That's it. The container automatically:
+1. Waits for Postgres to be ready
+2. Runs `migrate`
+3. Creates a default superuser (`admin` / `admin`)
+5. Starts Django on port 8000
 
 | URL | Purpose |
 |---|---|
+| `http://localhost:5173` | React frontend (Ingest + Dashboard) |
 | `http://localhost:8000/admin/` | Django Admin / Reconciliation Dashboard |
 | `http://localhost:8000/api/docs/` | Swagger UI |
 | `http://localhost:8000/api/redoc/` | ReDoc |
 | `http://localhost:8000/api/schema/` | Raw OpenAPI schema (YAML) |
+
+Both the backend and frontend start together. No separate terminal needed.
 
 ### Without Docker (venv)
 
@@ -73,7 +75,6 @@ venv/bin/pip install -r requirements.txt
 cp .env.example .env          # set DB_HOST=localhost
 createdb easybiz
 venv/bin/python manage.py migrate
-venv/bin/python manage.py loaddata currencies sources
 venv/bin/python manage.py createsuperuser
 venv/bin/python manage.py runserver
 ```
