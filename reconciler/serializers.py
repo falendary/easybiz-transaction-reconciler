@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models import Sum
 from rest_framework import serializers
 
@@ -257,6 +259,58 @@ class AccountEntrySerializer(serializers.ModelSerializer):
             "account_type": entry.account.account_type,
             "customer": entry.account.customer.name,
         }
+
+
+# ---------------------------------------------------------------------------
+# Manual intervention input serializers
+# ---------------------------------------------------------------------------
+
+class ManualMatchCreateSerializer(serializers.Serializer):
+    """Input for POST /api/matches/ — creates a manually confirmed match."""
+
+    transaction = serializers.PrimaryKeyRelatedField(queryset=Transaction.objects.all())
+    invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all())
+    allocated_amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
+    note = serializers.CharField(required=False, allow_blank=True, default="")
+    performed_by = serializers.PrimaryKeyRelatedField(
+        queryset=Responsible.objects.all(), required=False, allow_null=True, default=None
+    )
+
+    def validate(self, data: dict) -> dict:
+        txn = data["transaction"]
+        new_amount = data["allocated_amount"]
+        existing_total = (
+            txn.matches
+            .exclude(status__in=["rejected", "unrelated"])
+            .aggregate(total=Sum("allocated_amount"))["total"]
+            or Decimal("0")
+        )
+        if existing_total + new_amount > txn.amount:
+            raise serializers.ValidationError(
+                {"allocated_amount": (
+                    f"Total allocated ({existing_total + new_amount}) would exceed "
+                    f"transaction amount ({txn.amount})."
+                )}
+            )
+        return data
+
+
+class MatchActionSerializer(serializers.Serializer):
+    """Optional body for confirm / reject / mark-unrelated actions."""
+
+    performed_by = serializers.PrimaryKeyRelatedField(
+        queryset=Responsible.objects.all(), required=False, allow_null=True, default=None
+    )
+    note = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class ForceCloseSerializer(serializers.Serializer):
+    """Input for POST /api/invoices/<id>/force-close/."""
+
+    note = serializers.CharField(min_length=1)
+    performed_by = serializers.PrimaryKeyRelatedField(
+        queryset=Responsible.objects.all(), required=False, allow_null=True, default=None
+    )
 
 
 # ---------------------------------------------------------------------------

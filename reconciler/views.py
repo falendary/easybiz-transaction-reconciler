@@ -2,12 +2,20 @@ from django.db import connection
 from django.db.utils import OperationalError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reconciler.ingestion_service import ingest_invoices, ingest_payout, ingest_transactions
+from reconciler.manual_service import (
+    confirm_match,
+    create_manual_match,
+    force_close_invoice,
+    mark_match_unrelated,
+    reject_match,
+    unlock_match,
+)
 from reconciler.reconciliation_service import run_reconciliation
 
 from reconciler.filters import (
@@ -35,11 +43,14 @@ from reconciler.serializers import (
     CurrencySerializer,
     CustomerDetailSerializer,
     CustomerListSerializer,
+    ForceCloseSerializer,
     FXRateSerializer,
     IngestionEventDetailSerializer,
     IngestionEventSerializer,
     InvoiceDetailSerializer,
     InvoiceListSerializer,
+    ManualMatchCreateSerializer,
+    MatchActionSerializer,
     MatchSerializer,
     ReconciliationRunSerializer,
     TransactionDetailSerializer,
@@ -174,6 +185,32 @@ class InvoiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             )
         return self.queryset
 
+    @extend_schema(
+        summary="Force-close an invoice",
+        description="Bypasses normal payment matching. Requires a mandatory note. Status set to force_closed.",
+        request=ForceCloseSerializer,
+        responses={200: InvoiceDetailSerializer},
+    )
+    @action(detail=True, methods=["post"], url_path="force-close")
+    def force_close(self, request, pk=None):
+        """Force-close an invoice with a mandatory justification note.
+
+        Request body: note (required), performed_by (pk, optional).
+        Returns: 200 with updated Invoice detail, 400 if note is blank.
+        """
+        invoice = self.get_object()
+        ser = ForceCloseSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        try:
+            invoice = force_close_invoice(
+                invoice,
+                note=ser.validated_data["note"],
+                performed_by=ser.validated_data.get("performed_by"),
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(InvoiceDetailSerializer(invoice).data)
+
 
 # ---------------------------------------------------------------------------
 # Transactions
@@ -209,15 +246,145 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 @extend_schema_view(
     list=extend_schema(summary="List matches"),
     retrieve=extend_schema(summary="Match detail"),
+    create=extend_schema(
+        summary="Create a manual match",
+        description="Allocates a transaction to an invoice manually. allocated_amount must not cause over-allocation.",
+        request=ManualMatchCreateSerializer,
+        responses={201: MatchSerializer},
+    ),
+    destroy=extend_schema(
+        summary="Delete a match",
+        description="Only permitted if locked_by_user=false.",
+    ),
 )
-class MatchViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """Reconciliation matches filterable by status, match_type, and transaction_id."""
+class MatchViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Reconciliation matches. Supports create, delete, confirm, reject, mark-unrelated, unlock."""
 
     queryset = Match.objects.select_related(
         "transaction", "invoice", "performed_by"
     ).order_by("-created_at")
     serializer_class = MatchSerializer
     filterset_class = MatchFilter
+
+    def create(self, request):
+        """Create a manual match between a transaction and an invoice.
+
+        Request body: transaction (pk), invoice (pk), allocated_amount, note (optional), performed_by (pk, optional).
+        Returns: 201 with the created Match, 400 on validation failure.
+        """
+        ser = ManualMatchCreateSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        try:
+            match = create_manual_match(
+                transaction=d["transaction"],
+                invoice=d["invoice"],
+                allocated_amount=d["allocated_amount"],
+                note=d.get("note", ""),
+                performed_by=d.get("performed_by"),
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(MatchSerializer(match).data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, pk=None):
+        """Delete a match. Returns 403 if the match is locked by the user.
+
+        Returns: 204 on success, 403 if locked.
+        """
+        match = self.get_object()
+        if match.locked_by_user:
+            return Response(
+                {"detail": "Cannot delete a locked match. Unlock it first."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        match.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        summary="Confirm a match",
+        request=MatchActionSerializer,
+        responses={200: MatchSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def confirm(self, request, pk=None):
+        """Confirm a match, locking it from further engine processing.
+
+        Request body: performed_by (pk, optional), note (optional).
+        Returns: 200 with updated Match, 400 if already rejected/unrelated.
+        """
+        match = self.get_object()
+        ser = MatchActionSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        try:
+            match = confirm_match(match, performed_by=ser.validated_data.get("performed_by"))
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(MatchSerializer(match).data)
+
+    @extend_schema(
+        summary="Reject a match",
+        request=MatchActionSerializer,
+        responses={200: MatchSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        """Reject a match. Returns 400 if the match is locked and already confirmed.
+
+        Request body: performed_by (pk, optional), note (optional).
+        Returns: 200 with updated Match, 400 if locked-confirmed.
+        """
+        match = self.get_object()
+        ser = MatchActionSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        try:
+            match = reject_match(
+                match,
+                performed_by=ser.validated_data.get("performed_by"),
+                note=ser.validated_data.get("note", ""),
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(MatchSerializer(match).data)
+
+    @extend_schema(
+        summary="Mark a match as unrelated",
+        request=MatchActionSerializer,
+        responses={200: MatchSerializer},
+    )
+    @action(detail=True, methods=["post"], url_path="mark-unrelated")
+    def mark_unrelated(self, request, pk=None):
+        """Mark the transaction as unrelated to any invoice.
+
+        Request body: performed_by (pk, optional).
+        Returns: 200 with updated Match.
+        """
+        match = self.get_object()
+        ser = MatchActionSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        match = mark_match_unrelated(match, performed_by=ser.validated_data.get("performed_by"))
+        return Response(MatchSerializer(match).data)
+
+    @extend_schema(
+        summary="Unlock a match",
+        request=None,
+        responses={200: MatchSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def unlock(self, request, pk=None):
+        """Remove the user lock so the reconciliation engine can reprocess this match.
+
+        Returns: 200 with updated Match.
+        """
+        match = self.get_object()
+        match = unlock_match(match)
+        return Response(MatchSerializer(match).data)
 
 
 # ---------------------------------------------------------------------------

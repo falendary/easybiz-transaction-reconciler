@@ -21,6 +21,12 @@ Implementation of Django App
     - Create local server & docker compose
 11:30
     - Creating API endpoints for file ingest
+11:40
+    - Creating Django Admin Actions to upload files an reconcile
+    - Manual testing
+11:50
+    - Creating API endpoints for manual review
+
 
 
 [TODO] 13:00 - 14:00
