@@ -28,7 +28,8 @@ Implementation of Django App
     - Creating API endpoints for manual review
 12:00
     - Creating Django Admin Dashboard/Homepage to user to reconcile data
-
+12:10
+    - Creating showcases
 
 [TODO] 13:00 - 14:00
 - Implementing AI Scoring module

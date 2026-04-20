@@ -23,6 +23,8 @@
   .recon-table th { background:#417690; color:#fff; padding:8px 10px; text-align:left; white-space:nowrap; }
   .recon-table td { padding:7px 10px; border-bottom:1px solid #eee; vertical-align:middle; }
   .recon-table tr:hover td { background:#f5f9fc; }
+  .recon-table tr.row-matched td { background:#f0faf3; }
+  .recon-table tr.row-matched:hover td { background:#e4f5e9; }
 
   .badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:bold; white-space:nowrap; }
   .badge-needs_review  { background:#fff3cd; color:#856404; }
@@ -185,7 +187,7 @@
     </thead>
     <tbody>
       {% for match in reconciled %}
-      <tr>
+      <tr class="row-matched">
         <td>{{ match.transaction.date }}</td>
         <td>
           <a href="{% url 'admin:reconciler_transaction_change' match.transaction.pk %}">

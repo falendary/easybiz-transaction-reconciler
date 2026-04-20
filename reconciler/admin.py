@@ -317,7 +317,7 @@ class TransactionAdmin(admin.ModelAdmin):
         if date_to:
             base_qs = base_qs.filter(transaction__date__lte=date_to)
         if customer_id:
-            base_qs = base_qs.filter(invoice__customer_id=customer_id)
+            base_qs = base_qs.filter(invoice__customer__customer_id=customer_id)
 
         needs_review = list(
             base_qs.filter(status="needs_review").order_by("transaction__date", "transaction_id")[:200]
