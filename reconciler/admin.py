@@ -1,4 +1,5 @@
 import io
+from urllib.parse import urlencode
 
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
@@ -6,6 +7,7 @@ from django.shortcuts import render
 from django.urls import path, reverse
 
 from reconciler.ingestion_service import ingest_invoices, ingest_payout, ingest_transactions
+from reconciler.manual_service import confirm_match, mark_match_unrelated, reject_match
 from reconciler.models import (
     Account,
     AccountEntry,
@@ -184,8 +186,22 @@ class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceLineItemInline]
 
 
+class MatchInline(admin.TabularInline):
+    """Matches shown inline on the Transaction detail page."""
+
+    model = Match
+    extra = 0
+    fields = ["invoice", "allocated_amount", "confidence_score", "match_type", "status", "locked_by_user", "note"]
+    readonly_fields = ["confidence_score", "match_type", "locked_by_user"]
+    show_change_link = True
+
+
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
+    """Transaction changelist is the primary review workspace.
+    Use the Reconciliation Dashboard button for the two-table review/reconciled view.
+    """
+
     list_display = [
         "transaction_id", "date", "amount", "currency",
         "raw_counterparty", "reconciliation_status", "is_duplicate", "locked_by_user",
@@ -193,7 +209,136 @@ class TransactionAdmin(admin.ModelAdmin):
     list_filter = ["reconciliation_status", "is_duplicate", "locked_by_user", "currency"]
     search_fields = ["transaction_id", "raw_counterparty", "structured_reference", "description"]
     date_hierarchy = "date"
-    readonly_fields = ["created_at"]
+    readonly_fields = ["transaction_id", "date", "amount", "currency", "raw_counterparty",
+                       "structured_reference", "description", "is_duplicate", "created_at"]
+    inlines = [MatchInline]
+    actions = ["action_confirm_matches", "action_reject_matches", "action_mark_unrelated"]
+    change_list_template = "admin/reconciler/transaction/change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "dashboard/",
+                self.admin_site.admin_view(self._dashboard_view),
+                name="reconciler-dashboard",
+            ),
+        ]
+        return custom + urls
+
+    # ------------------------------------------------------------------
+    # Bulk admin actions (changelist checkboxes)
+    # ------------------------------------------------------------------
+
+    @admin.action(description="Confirm all needs_review matches for selected transactions")
+    def action_confirm_matches(self, request, queryset):
+        """Confirm every needs_review Match attached to the selected transactions."""
+        confirmed = 0
+        for txn in queryset:
+            for match in txn.matches.filter(status="needs_review"):
+                try:
+                    confirm_match(match)
+                    confirmed += 1
+                except ValueError:
+                    pass
+        self.message_user(request, f"{confirmed} match(es) confirmed.")
+
+    @admin.action(description="Reject all matches for selected transactions")
+    def action_reject_matches(self, request, queryset):
+        """Reject every non-locked Match attached to the selected transactions."""
+        rejected = 0
+        for txn in queryset:
+            for match in txn.matches.exclude(status__in=["confirmed", "manually_matched"]).filter(locked_by_user=False):
+                try:
+                    reject_match(match)
+                    rejected += 1
+                except ValueError:
+                    pass
+        self.message_user(request, f"{rejected} match(es) rejected.", messages.WARNING)
+
+    @admin.action(description="Mark selected transactions as unrelated")
+    def action_mark_unrelated(self, request, queryset):
+        """Mark the first unlocked match on each selected transaction as unrelated."""
+        marked = 0
+        for txn in queryset:
+            for match in txn.matches.filter(locked_by_user=False):
+                mark_match_unrelated(match)
+                marked += 1
+                break  # one match per transaction is enough to flip status
+        self.message_user(request, f"{marked} transaction(s) marked unrelated.")
+
+    # ------------------------------------------------------------------
+    # Dashboard view
+    # ------------------------------------------------------------------
+
+    def _dashboard_view(self, request):
+        """Two-table reconciliation dashboard with date-range and customer filters.
+
+        POST: handle per-row confirm / reject / unrelated actions.
+        GET: render the dashboard with filtered match tables.
+        """
+        if request.method == "POST":
+            action = request.POST.get("action")
+            match_id = request.POST.get("match_id")
+            if action and match_id:
+                try:
+                    match = Match.objects.get(pk=match_id)
+                    if action == "confirm":
+                        confirm_match(match)
+                        messages.success(request, f"Match #{match_id} confirmed.")
+                    elif action == "reject":
+                        reject_match(match)
+                        messages.warning(request, f"Match #{match_id} rejected.")
+                    elif action == "unrelated":
+                        mark_match_unrelated(match)
+                        messages.info(request, "Transaction marked as unrelated.")
+                except Match.DoesNotExist:
+                    messages.error(request, f"Match #{match_id} not found.")
+                except ValueError as exc:
+                    messages.error(request, str(exc))
+
+            params = {k: request.POST[k] for k in ("date_from", "date_to", "customer")
+                      if request.POST.get(k)}
+            redirect_url = reverse("admin:reconciler-dashboard")
+            if params:
+                redirect_url += "?" + urlencode(params)
+            return HttpResponseRedirect(redirect_url)
+
+        date_from = request.GET.get("date_from", "")
+        date_to = request.GET.get("date_to", "")
+        customer_id = request.GET.get("customer", "")
+
+        base_qs = Match.objects.select_related(
+            "transaction", "transaction__currency",
+            "invoice", "invoice__customer",
+        )
+        if date_from:
+            base_qs = base_qs.filter(transaction__date__gte=date_from)
+        if date_to:
+            base_qs = base_qs.filter(transaction__date__lte=date_to)
+        if customer_id:
+            base_qs = base_qs.filter(invoice__customer_id=customer_id)
+
+        needs_review = list(
+            base_qs.filter(status="needs_review").order_by("transaction__date", "transaction_id")[:200]
+        )
+        reconciled = list(
+            base_qs.filter(status__in=["auto_matched", "confirmed", "manually_matched"])
+            .order_by("-transaction__date")[:200]
+        )
+        customers = Customer.objects.order_by("name")
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Reconciliation Dashboard",
+            "needs_review": needs_review,
+            "reconciled": reconciled,
+            "customers": customers,
+            "filter_date_from": date_from,
+            "filter_date_to": date_to,
+            "filter_customer": customer_id,
+        }
+        return render(request, "admin/reconciler/dashboard.html", context)
 
 
 @admin.register(PayoutLine)

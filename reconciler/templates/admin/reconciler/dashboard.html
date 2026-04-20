@@ -1,0 +1,230 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo; Reconciliation Dashboard
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .recon-filters { background:#f8f8f8; border:1px solid #ddd; padding:14px 18px; border-radius:4px; margin-bottom:20px; display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; }
+  .recon-filters label { display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:#666; }
+  .recon-filters input[type=date], .recon-filters select { padding:5px 8px; border:1px solid #ccc; border-radius:3px; font-size:13px; }
+  .recon-filters .filter-btn { background:#417690; color:#fff; border:none; padding:6px 16px; border-radius:3px; cursor:pointer; font-size:13px; }
+  .recon-filters .clear-btn { background:#fff; color:#417690; border:1px solid #417690; padding:6px 12px; border-radius:3px; cursor:pointer; font-size:13px; text-decoration:none; }
+
+  .recon-section { margin-bottom:32px; }
+  .recon-section h2 { font-size:15px; color:#333; border-bottom:2px solid #417690; padding-bottom:6px; margin-bottom:0; }
+  .recon-section .section-meta { font-size:12px; color:#888; padding:4px 0 8px; }
+
+  .recon-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .recon-table th { background:#417690; color:#fff; padding:8px 10px; text-align:left; white-space:nowrap; }
+  .recon-table td { padding:7px 10px; border-bottom:1px solid #eee; vertical-align:middle; }
+  .recon-table tr:hover td { background:#f5f9fc; }
+
+  .badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:bold; white-space:nowrap; }
+  .badge-needs_review  { background:#fff3cd; color:#856404; }
+  .badge-auto_matched  { background:#d1e7dd; color:#0f5132; }
+  .badge-confirmed     { background:#cff4fc; color:#055160; }
+  .badge-manually_matched { background:#d1e7dd; color:#0f5132; }
+  .badge-rejected      { background:#f8d7da; color:#842029; }
+  .badge-unrelated     { background:#e2e3e5; color:#41464b; }
+  .badge-noise         { background:#e2e3e5; color:#41464b; }
+  .badge-duplicate     { background:#fff3cd; color:#856404; }
+
+  .conf-high { color:#0f5132; font-weight:bold; }
+  .conf-mid  { color:#856404; }
+  .conf-low  { color:#842029; }
+
+  .action-btns form { display:inline; }
+  .btn-confirm  { background:#198754; color:#fff; border:none; padding:3px 10px; border-radius:3px; cursor:pointer; font-size:12px; }
+  .btn-reject   { background:#dc3545; color:#fff; border:none; padding:3px 10px; border-radius:3px; cursor:pointer; font-size:12px; }
+  .btn-unrelated{ background:#6c757d; color:#fff; border:none; padding:3px 10px; border-radius:3px; cursor:pointer; font-size:12px; }
+  .btn-edit     { background:#0d6efd; color:#fff; padding:3px 10px; border-radius:3px; font-size:12px; text-decoration:none; display:inline-block; }
+
+  .empty-msg { padding:20px; text-align:center; color:#888; font-style:italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Reconciliation Dashboard</h1>
+
+{# ── Filter bar ── #}
+<form method="get" class="recon-filters">
+  <div>
+    <label for="date_from">Date from</label>
+    <input type="date" id="date_from" name="date_from" value="{{ filter_date_from }}">
+  </div>
+  <div>
+    <label for="date_to">Date to</label>
+    <input type="date" id="date_to" name="date_to" value="{{ filter_date_to }}">
+  </div>
+  <div>
+    <label for="customer">Client</label>
+    <select id="customer" name="customer">
+      <option value="">— All clients —</option>
+      {% for c in customers %}
+        <option value="{{ c.customer_id }}" {% if c.customer_id == filter_customer %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <button type="submit" class="filter-btn">Apply</button>
+    <a href="{% url 'admin:reconciler-dashboard' %}" class="clear-btn">Clear</a>
+  </div>
+</form>
+
+{# ── Table 1: Needs Review ── #}
+<div class="recon-section">
+  <h2>Needs Review</h2>
+  <div class="section-meta">
+    {{ needs_review|length }} match{{ needs_review|length|pluralize }} shown (max 200).
+    Use filters above to narrow results.
+  </div>
+  {% if needs_review %}
+  <table class="recon-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Transaction</th>
+        <th>Amount</th>
+        <th>Counterparty</th>
+        <th>Reference</th>
+        <th>Invoice</th>
+        <th>Match type</th>
+        <th>Confidence</th>
+        <th>Note</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in needs_review %}
+      <tr>
+        <td>{{ match.transaction.date }}</td>
+        <td>
+          <a href="{% url 'admin:reconciler_transaction_change' match.transaction.pk %}">
+            {{ match.transaction.transaction_id }}
+          </a>
+        </td>
+        <td style="white-space:nowrap">{{ match.transaction.amount }} {{ match.transaction.currency.code }}</td>
+        <td>{{ match.transaction.raw_counterparty|truncatechars:30 }}</td>
+        <td style="font-size:11px;color:#555">{{ match.transaction.structured_reference|default:"—" }}</td>
+        <td>
+          {% if match.invoice %}
+            <a href="{% url 'admin:reconciler_invoice_change' match.invoice.pk %}">
+              {{ match.invoice.invoice_id }}
+            </a>
+            {% if match.invoice.customer %}
+              <br><span style="font-size:11px;color:#888">{{ match.invoice.customer.name }}</span>
+            {% endif %}
+          {% else %}
+            <span style="color:#aaa">—</span>
+          {% endif %}
+        </td>
+        <td><span class="badge badge-{{ match.match_type }}">{{ match.get_match_type_display }}</span></td>
+        <td>
+          {% with score=match.confidence_score %}
+            {% if score >= 0.85 %}
+              <span class="conf-high">{{ score }}</span>
+            {% elif score >= 0.70 %}
+              <span class="conf-mid">{{ score }}</span>
+            {% else %}
+              <span class="conf-low">{{ score }}</span>
+            {% endif %}
+          {% endwith %}
+        </td>
+        <td style="font-size:11px;color:#666">{{ match.note|default:""|truncatechars:40 }}</td>
+        <td class="action-btns">
+          <form method="post" action="{% url 'admin:reconciler-dashboard' %}">
+            {% csrf_token %}
+            <input type="hidden" name="match_id" value="{{ match.pk }}">
+            <input type="hidden" name="date_from"  value="{{ filter_date_from }}">
+            <input type="hidden" name="date_to"    value="{{ filter_date_to }}">
+            <input type="hidden" name="customer"   value="{{ filter_customer }}">
+            <button name="action" value="confirm"   class="btn-confirm"  title="Confirm this match">✓ Confirm</button>
+            <button name="action" value="reject"    class="btn-reject"   title="Reject this match">✗ Reject</button>
+            <button name="action" value="unrelated" class="btn-unrelated" title="Mark as unrelated">~ Unrelated</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-msg">No transactions need review{% if filter_date_from or filter_date_to or filter_customer %} for the current filters{% endif %}. 🎉</div>
+  {% endif %}
+</div>
+
+{# ── Table 2: Reconciled ── #}
+<div class="recon-section">
+  <h2>Reconciled</h2>
+  <div class="section-meta">
+    {{ reconciled|length }} match{{ reconciled|length|pluralize }} shown (max 200).
+    Click &ldquo;Edit&rdquo; to adjust a match manually.
+  </div>
+  {% if reconciled %}
+  <table class="recon-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Transaction</th>
+        <th>Amount</th>
+        <th>Counterparty</th>
+        <th>Invoice</th>
+        <th>Client</th>
+        <th>Allocated</th>
+        <th>Match type</th>
+        <th>Status</th>
+        <th>Confidence</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in reconciled %}
+      <tr>
+        <td>{{ match.transaction.date }}</td>
+        <td>
+          <a href="{% url 'admin:reconciler_transaction_change' match.transaction.pk %}">
+            {{ match.transaction.transaction_id }}
+          </a>
+        </td>
+        <td style="white-space:nowrap">{{ match.transaction.amount }} {{ match.transaction.currency.code }}</td>
+        <td>{{ match.transaction.raw_counterparty|truncatechars:25 }}</td>
+        <td>
+          {% if match.invoice %}
+            <a href="{% url 'admin:reconciler_invoice_change' match.invoice.pk %}">
+              {{ match.invoice.invoice_id }}
+            </a>
+          {% else %}
+            <span style="color:#aaa">—</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px">
+          {% if match.invoice and match.invoice.customer %}{{ match.invoice.customer.name|truncatechars:22 }}{% else %}—{% endif %}
+        </td>
+        <td style="white-space:nowrap">{{ match.allocated_amount }}</td>
+        <td><span class="badge badge-{{ match.match_type }}">{{ match.get_match_type_display }}</span></td>
+        <td><span class="badge badge-{{ match.status }}">{{ match.get_status_display }}</span></td>
+        <td>
+          {% with score=match.confidence_score %}
+            {% if score >= 0.85 %}<span class="conf-high">{{ score }}</span>
+            {% elif score >= 0.70 %}<span class="conf-mid">{{ score }}</span>
+            {% else %}<span class="conf-low">{{ score }}</span>{% endif %}
+          {% endwith %}
+        </td>
+        <td>
+          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-msg">No reconciled matches{% if filter_date_from or filter_date_to or filter_customer %} for the current filters{% endif %}.</div>
+  {% endif %}
+</div>
+{% endblock %}
