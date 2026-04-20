@@ -12,6 +12,7 @@ from difflib import SequenceMatcher
 from typing import Optional
 
 from django.conf import settings
+from django.db.models import Sum
 from django.utils import timezone
 
 from reconciler.models import (
@@ -228,7 +229,12 @@ def _rule6_consolidated(txn: Transaction) -> Optional[list[_Candidate]]:
 
 
 def _rule7_partial(txn: Transaction) -> Optional[list[_Candidate]]:
-    """Structured reference matches an invoice but amount is less (partial payment)."""
+    """Structured reference matches an invoice but amount is less than total (partial payment).
+
+    If all transactions sharing the same structured_reference sum exactly to the invoice
+    total, the split is intentional — confidence is raised to 0.95 (auto_matched).
+    Otherwise confidence is 0.75 (needs_review).
+    """
     ref = txn.structured_reference
     if not ref:
         return None
@@ -236,15 +242,28 @@ def _rule7_partial(txn: Transaction) -> Optional[list[_Candidate]]:
         invoice = Invoice.objects.get(invoice_id=_normalize_id(ref))
     except Invoice.DoesNotExist:
         return None
-    if txn.amount < invoice.total:
-        return [_Candidate(
-            invoice=invoice,
-            allocated_amount=txn.amount,
-            confidence=Decimal("0.75"),
-            match_type="partial",
-            txn_status="needs_review",
-        )]
-    return None
+    if txn.amount >= invoice.total:
+        return None
+
+    all_txns_total = (
+        Transaction.objects.filter(structured_reference=ref)
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+    if all_txns_total == invoice.total:
+        conf = Decimal("0.95")
+        txn_status = "auto_matched"
+    else:
+        conf = Decimal("0.75")
+        txn_status = "needs_review"
+
+    return [_Candidate(
+        invoice=invoice,
+        allocated_amount=txn.amount,
+        confidence=conf,
+        match_type="partial",
+        txn_status=txn_status,
+    )]
 
 
 def _rule8_fuzzy(txn: Transaction) -> Optional[list[_Candidate]]:

@@ -304,13 +304,36 @@ class TransactionAdmin(admin.ModelAdmin):
                 redirect_url += "?" + urlencode(params)
             return HttpResponseRedirect(redirect_url)
 
-        from django.db.models import Q
+        from datetime import date
+        from django.db.models import Min, Q
 
-        from datetime import date, timedelta
         today = date.today()
-        date_from = request.GET.get("date_from") or (today - timedelta(days=2)).isoformat()
-        date_to = request.GET.get("date_to") or today.isoformat()
         customer_id = request.GET.get("customer", "")
+        customer_obj = Customer.objects.filter(customer_id=customer_id).first() if customer_id else None
+
+        # Customer filter — built once, reused for both the min-date lookup and the main queries.
+        # needs_review: OR with raw_counterparty because unmatched matches have invoice=null.
+        # reconciled: strict invoice→customer path only.
+        if customer_obj:
+            by_invoice = Q(invoice__customer__customer_id=customer_id)
+            by_counterparty = Q(invoice__isnull=True, transaction__raw_counterparty__icontains=customer_obj.name)
+            needs_review_filter = by_invoice | by_counterparty
+            reconciled_filter = by_invoice
+        else:
+            needs_review_filter = Q()
+            reconciled_filter = Q()
+
+        # Default date_from: earliest transaction date visible under the current customer filter.
+        if request.GET.get("date_from"):
+            date_from = request.GET["date_from"]
+        else:
+            earliest = (
+                Match.objects.filter(needs_review_filter | reconciled_filter)
+                .aggregate(min_date=Min("transaction__date"))["min_date"]
+            )
+            date_from = earliest.isoformat() if earliest else today.isoformat()
+
+        date_to = request.GET.get("date_to") or today.isoformat()
 
         base_qs = Match.objects.select_related(
             "transaction", "transaction__currency",
@@ -320,20 +343,6 @@ class TransactionAdmin(admin.ModelAdmin):
             base_qs = base_qs.filter(transaction__date__gte=date_from)
         if date_to:
             base_qs = base_qs.filter(transaction__date__lte=date_to)
-
-        # Customer filter applied differently per table:
-        # - reconciled matches always have an invoice → filter via invoice→customer
-        # - needs_review matches may have invoice=null (no rule matched), so also
-        #   check raw_counterparty against the customer name as a fallback
-        customer_obj = Customer.objects.filter(customer_id=customer_id).first() if customer_id else None
-        if customer_obj:
-            by_invoice = Q(invoice__customer__customer_id=customer_id)
-            by_counterparty = Q(invoice__isnull=True, transaction__raw_counterparty__icontains=customer_obj.name)
-            needs_review_filter = by_invoice | by_counterparty
-            reconciled_filter = by_invoice
-        else:
-            needs_review_filter = Q()
-            reconciled_filter = Q()
 
         needs_review = list(
             base_qs.filter(status="needs_review").filter(needs_review_filter)
