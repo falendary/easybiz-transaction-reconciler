@@ -1,0 +1,9 @@
+
+9:00 - 10:00
+Task assigment research and plan proposition
+
+10:00 - 10:30
+Creating implementation plan and drafting core models and logic
+Creating API Endpoints schema
+
+
