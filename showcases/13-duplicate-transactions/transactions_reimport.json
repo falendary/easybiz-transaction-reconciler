@@ -1,0 +1,11 @@
+[
+  {
+    "id": "SHOWCASE-13-TXN-2026-0002",
+    "date": "2026-03-15",
+    "amount": "585.00",
+    "currency": "EUR",
+    "counterparty_name": "SHOWCASE-13 Acme S.à r.l.",
+    "structured_reference": "SHOWCASE-13-INV-2026-0001",
+    "description": "[RE-IMPORTED] Payment SHOWCASE-13-INV-2026-0001"
+  }
+]

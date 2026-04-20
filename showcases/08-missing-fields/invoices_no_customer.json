@@ -1,0 +1,10 @@
+[
+  {
+    "id": "SHOWCASE-08-INV-2026-0001",
+    "type": "invoice",
+    "issue_date": "2026-03-01",
+    "due_date": "2026-03-31",
+    "currency": "EUR",
+    "total": "585.00"
+  }
+]

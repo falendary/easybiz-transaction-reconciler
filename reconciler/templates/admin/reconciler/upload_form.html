@@ -10,7 +10,6 @@
 {% endblock %}
 
 {% block content %}
-<h1>{{ title }}</h1>
 {% if result %}
   <div class="{% if result.status == 'success' %}success{% else %}errornote{% endif %}" style="padding:12px;margin-bottom:16px;border-radius:4px;background:{% if result.status == 'success' %}#dfd{% else %}#fdd{% endif %}">
     <strong>{{ result.status|upper }}</strong> — {{ result.message }}

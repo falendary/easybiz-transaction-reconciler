@@ -58,7 +58,12 @@ docker compose exec web venv/bin/python manage.py loaddata currencies sources
 docker compose exec web venv/bin/python manage.py createsuperuser
 ```
 
-App is at `http://localhost:8000`. Admin at `http://localhost:8000/admin/`.
+| URL | Purpose |
+|---|---|
+| `http://localhost:8000/admin/` | Django Admin / Reconciliation Dashboard |
+| `http://localhost:8000/api/docs/` | Swagger UI |
+| `http://localhost:8000/api/redoc/` | ReDoc |
+| `http://localhost:8000/api/schema/` | Raw OpenAPI schema (YAML) |
 
 ### Without Docker (venv)
 

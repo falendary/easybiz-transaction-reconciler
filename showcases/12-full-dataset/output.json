@@ -1,0 +1,525 @@
+{
+  "_meta": {
+    "description": "Expected reconciliation output for the full EasyBiz dataset (80 transactions, 50 invoices + 2 credit notes, 1 payout CSV). Compare field-by-field against the app's actual output.",
+    "totals": {
+      "transactions": 80,
+      "auto_matched": 43,
+      "needs_review": 14,
+      "duplicate": 5,
+      "unrelated": 18
+    },
+    "confidence_threshold": 0.85,
+    "payout_csv_required": true,
+    "note": "Payout CSV must be uploaded BEFORE running reconciliation so PayoutLines exist when Rule 3 fires."
+  },
+  "transactions": [
+    {
+      "transaction_id": "TXN-0001",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4 — exact reference + exact amount",
+      "matches": [{ "invoice_id": "INV-2026-0001", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1123.20 }]
+    },
+    {
+      "transaction_id": "TXN-0002",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0002", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 122.85 }]
+    },
+    {
+      "transaction_id": "TXN-0003",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0003", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 871.65 }]
+    },
+    {
+      "transaction_id": "TXN-0004",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0004", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1737.45 }]
+    },
+    {
+      "transaction_id": "TXN-0005",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0005", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0006",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0006", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1281.15 }]
+    },
+    {
+      "transaction_id": "TXN-0007",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0007", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 2562.30 }]
+    },
+    {
+      "transaction_id": "TXN-0008",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0008", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 585.00 }]
+    },
+    {
+      "transaction_id": "TXN-0009",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0009", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 228.15 }]
+    },
+    {
+      "transaction_id": "TXN-0010",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0010", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 988.65 }]
+    },
+    {
+      "transaction_id": "TXN-0011",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0011", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1842.75 }]
+    },
+    {
+      "transaction_id": "TXN-0012",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0012", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 965.25 }]
+    },
+    {
+      "transaction_id": "TXN-0013",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0013", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 175.50 }]
+    },
+    {
+      "transaction_id": "TXN-0014",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0014", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 175.50 }]
+    },
+    {
+      "transaction_id": "TXN-0015",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0015", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 2843.10 }]
+    },
+    {
+      "transaction_id": "TXN-0016",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0016", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 614.25 }]
+    },
+    {
+      "transaction_id": "TXN-0017",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0017", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0018",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0018", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 122.85 }]
+    },
+    {
+      "transaction_id": "TXN-0019",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0019", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 421.20 }]
+    },
+    {
+      "transaction_id": "TXN-0020",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0020", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1269.45 }]
+    },
+    {
+      "transaction_id": "TXN-0021",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0021", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 81.90 }]
+    },
+    {
+      "transaction_id": "TXN-0022",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0022", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 2749.50 }]
+    },
+    {
+      "transaction_id": "TXN-0023",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0023", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1076.40 }]
+    },
+    {
+      "transaction_id": "TXN-0024",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0024", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 579.15 }]
+    },
+    {
+      "transaction_id": "TXN-0025",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 4",
+      "matches": [{ "invoice_id": "INV-2026-0025", "confidence": 0.95, "match_type": "exact", "status": "auto_matched", "allocated_amount": 1088.10 }]
+    },
+    {
+      "transaction_id": "TXN-0026",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 7 — partial grouping (TXN-0026 + TXN-0027 = 1404+1404 = 2808 = INV-2026-0026 total)",
+      "matches": [{ "invoice_id": "INV-2026-0026", "confidence": 0.95, "match_type": "partial", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0027",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 7 — partial grouping (same group as TXN-0026)",
+      "matches": [{ "invoice_id": "INV-2026-0026", "confidence": 0.95, "match_type": "partial", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0028",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 7 — partial grouping (TXN-0028 + TXN-0029 = 1404+1404 = 2808 = INV-2026-0027 total)",
+      "matches": [{ "invoice_id": "INV-2026-0027", "confidence": 0.95, "match_type": "partial", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0029",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 7 — partial grouping (same group as TXN-0028)",
+      "matches": [{ "invoice_id": "INV-2026-0027", "confidence": 0.95, "match_type": "partial", "status": "auto_matched", "allocated_amount": 1404.00 }]
+    },
+    {
+      "transaction_id": "TXN-0030",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 6 — consolidated (INV-2026-0028 351 + INV-2026-0029 468 + INV-2026-0030 585 = 1404 = txn amount)",
+      "matches": [
+        { "invoice_id": "INV-2026-0028", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 351.00 },
+        { "invoice_id": "INV-2026-0029", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 468.00 },
+        { "invoice_id": "INV-2026-0030", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 585.00 }
+      ]
+    },
+    {
+      "transaction_id": "TXN-0031",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 6 — consolidated (INV-2026-0031 351 + INV-2026-0032 468 + INV-2026-0033 585 = 1404 = txn amount)",
+      "matches": [
+        { "invoice_id": "INV-2026-0031", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 351.00 },
+        { "invoice_id": "INV-2026-0032", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 468.00 },
+        { "invoice_id": "INV-2026-0033", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 585.00 }
+      ]
+    },
+    {
+      "transaction_id": "TXN-0032",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 6 — credit note netting (INV-2026-0034 2281.50 + CN-2026-0001 -456.30 = 1825.20 = txn amount)",
+      "matches": [
+        { "invoice_id": "INV-2026-0034", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 2281.50 },
+        { "invoice_id": "CN-2026-0001",  "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": -456.30 }
+      ]
+    },
+    {
+      "transaction_id": "TXN-0033",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 6 — credit note netting (INV-2026-0035 2281.50 + CN-2026-0002 -456.30 = 1825.20 = txn amount)",
+      "matches": [
+        { "invoice_id": "INV-2026-0035", "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": 2281.50 },
+        { "invoice_id": "CN-2026-0002",  "confidence": 0.95, "match_type": "consolidated", "status": "auto_matched", "allocated_amount": -456.30 }
+      ]
+    },
+    {
+      "transaction_id": "TXN-0034",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 5 — FX tolerance (526.37 vs 526.50, delta 0.025%)",
+      "matches": [{ "invoice_id": "INV-2026-0036", "confidence": 0.85, "match_type": "fx", "status": "auto_matched", "allocated_amount": 526.37 }]
+    },
+    {
+      "transaction_id": "TXN-0035",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 5 — FX tolerance (526.57 vs 526.50, delta 0.013%)",
+      "matches": [{ "invoice_id": "INV-2026-0037", "confidence": 0.85, "match_type": "fx", "status": "auto_matched", "allocated_amount": 526.57 }]
+    },
+    {
+      "transaction_id": "TXN-0036",
+      "reconciliation_status": "auto_matched",
+      "rule": "Rule 5 — FX tolerance (526.28 vs 526.50, delta 0.042%)",
+      "matches": [{ "invoice_id": "INV-2026-0038", "confidence": 0.85, "match_type": "fx", "status": "auto_matched", "allocated_amount": 526.28 }]
+    },
+    {
+      "transaction_id": "TXN-0037",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 8 — invoice ID extracted from description ('INV 20260039' → INV-2026-0039)",
+      "matches": [{ "invoice_id": "INV-2026-0039", "confidence": 0.70, "match_type": "exact", "status": "needs_review", "note": "Invoice ID extracted from description: INV-2026-0039" }]
+    },
+    {
+      "transaction_id": "TXN-0038",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 8 — fuzzy counterparty ('Stark Consulting S.A.' matches INV-2026-0040 customer, amount exact)",
+      "matches": [{ "invoice_id": "INV-2026-0040", "confidence": 0.70, "match_type": "exact", "status": "needs_review", "note": "Fuzzy counterparty match (score=1.00)" }]
+    },
+    {
+      "transaction_id": "TXN-0039",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 8 — fuzzy counterparty ('PIED PIPER SCA' matches INV-2026-0041 customer, amount exact)",
+      "matches": [{ "invoice_id": "INV-2026-0041", "confidence": 0.70, "match_type": "exact", "status": "needs_review", "note": "Fuzzy counterparty match (score=1.00)" }]
+    },
+    {
+      "transaction_id": "TXN-0040",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 8 — ID in description (INV-2026-0042); amount 215.60 vs invoice 210.60 = 2.37% > 2% tolerance, Rule 5 rejected",
+      "matches": [{ "invoice_id": "INV-2026-0042", "confidence": 0.70, "match_type": "exact", "status": "needs_review", "note": "Invoice ID extracted from description: INV-2026-0042" }]
+    },
+    {
+      "transaction_id": "TXN-0041",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 8 — ID in description (INV-2026-0043); amount 215.97 vs invoice 210.60 = 2.55% > 2% tolerance, Rule 5 rejected",
+      "matches": [{ "invoice_id": "INV-2026-0043", "confidence": 0.70, "match_type": "exact", "status": "needs_review", "note": "Invoice ID extracted from description: INV-2026-0043" }]
+    },
+    {
+      "transaction_id": "TXN-0042",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 7 — partial, single payment so far; 361.90 < 374.40 and no other transaction with same ref",
+      "matches": [{ "invoice_id": "INV-2026-0044", "confidence": 0.75, "match_type": "partial", "status": "needs_review", "note": "Partial payment: this transaction 361.90, invoice total 374.40, all payments so far 361.90" }]
+    },
+    {
+      "transaction_id": "TXN-0043",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 3 — Stripe payout decomposed via PayoutLines; 5 charges auto-matched, refund + chargeback need review",
+      "matches": [
+        { "invoice_id": "INV-2026-0045", "confidence": 0.95, "match_type": "payout", "status": "auto_matched",  "allocated_amount": 510.98, "payout_line": "ch_30NfK", "note": "Stripe charge; fee=15.52" },
+        { "invoice_id": "INV-2026-0046", "confidence": 0.95, "match_type": "payout", "status": "auto_matched",  "allocated_amount": 545.06, "payout_line": "ch_31NfK", "note": "Stripe charge; fee=16.54" },
+        { "invoice_id": "INV-2026-0047", "confidence": 0.95, "match_type": "payout", "status": "auto_matched",  "allocated_amount": 579.15, "payout_line": "ch_32NfK", "note": "Stripe charge; fee=17.55" },
+        { "invoice_id": "INV-2026-0048", "confidence": 0.95, "match_type": "payout", "status": "auto_matched",  "allocated_amount": 613.23, "payout_line": "ch_33NfK", "note": "Stripe charge; fee=18.57" },
+        { "invoice_id": "INV-2026-0049", "confidence": 0.95, "match_type": "payout", "status": "auto_matched",  "allocated_amount": 647.31, "payout_line": "ch_34NfK", "note": "Stripe charge; fee=19.59" },
+        { "invoice_id": null,            "confidence": 0.00, "match_type": "payout", "status": "needs_review", "allocated_amount": -125.00, "payout_line": "rf_A1",   "note": "Stripe refund — manual review required" },
+        { "invoice_id": null,            "confidence": 0.00, "match_type": "payout", "status": "needs_review", "allocated_amount": -50.00,  "payout_line": "cb_B1",   "note": "Stripe chargeback — manual review required" }
+      ]
+    },
+    {
+      "transaction_id": "TXN-0044",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — no match; advance payment with no invoice reference, no fuzzy match within 2% tolerance",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0045",
+      "reconciliation_status": "duplicate",
+      "rule": "Rule 2 — [RE-IMPORTED] flag",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "duplicate", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0046",
+      "reconciliation_status": "duplicate",
+      "rule": "Rule 2 — [RE-IMPORTED] flag",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "duplicate", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0047",
+      "reconciliation_status": "duplicate",
+      "rule": "Rule 2 — [RE-IMPORTED] flag",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "duplicate", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0048",
+      "reconciliation_status": "duplicate",
+      "rule": "Rule 2 — [RE-IMPORTED] flag",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "duplicate", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0049",
+      "reconciliation_status": "duplicate",
+      "rule": "Rule 2 — [RE-IMPORTED] flag",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "duplicate", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0050",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-2996.27)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0051",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'immo lux'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0052",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'bcee'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0053",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — noise keyword 'bcee' (positive interest credit, but BCEE is a known-noise counterparty)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0054",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — 'AMZN LUXEMBOURG' not in noise keyword list ('amazon' ≠ 'amzn'), no invoice match",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0055",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — VAT refund, no invoice reference, no counterparty match",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0056",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-148.39)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0057",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'enovos'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0058",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-4446.01)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0059",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'slack'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0060",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-2878.70)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0061",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'immo lux'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0062",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'bcee'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0063",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — noise keyword 'bcee'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0064",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — 'AMZN LUXEMBOURG' not in noise list, no invoice match",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0065",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — VAT refund, no invoice reference",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0066",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-247.07)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0067",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'enovos'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0068",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-2849.37)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0069",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'slack'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0070",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-2866.17)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0071",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'immo lux'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0072",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'bcee'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0073",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — noise keyword 'bcee'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0074",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — 'AMZN LUXEMBOURG' not in noise list, no invoice match",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0075",
+      "reconciliation_status": "needs_review",
+      "rule": "Rule 10 — VAT refund, no invoice reference",
+      "matches": [{ "invoice_id": null, "confidence": 0.00, "match_type": "exact", "status": "needs_review", "note": "No matching invoice found" }]
+    },
+    {
+      "transaction_id": "TXN-0076",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-126.28)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0077",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'enovos'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0078",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-3473.24)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0079",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount AND noise keyword 'slack'",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    },
+    {
+      "transaction_id": "TXN-0080",
+      "reconciliation_status": "unrelated",
+      "rule": "Rule 1 — negative amount (-3080.86)",
+      "matches": [{ "invoice_id": null, "confidence": 1.00, "match_type": "noise", "status": "unrelated" }]
+    }
+  ],
+  "known_gaps": [
+    "TXN-0050: INV-2026-0050 (Stark, €1404) is open but TXN-0044 amount €1500 is 6.8% over total — outside 2% tolerance. Invoice stays open.",
+    "TXN-0054/0064/0074: 'AMZN LUXEMBOURG' not flagged as noise — 'amazon' keyword doesn't match 'amzn'. Add 'amzn' to NOISE_COUNTERPARTY_KEYWORDS to auto-classify these as unrelated.",
+    "TXN-0055/0065/0075: VAT refunds from tax authority land in needs_review. Adding 'enregistrement' or 'administration' to noise list would auto-classify them as unrelated.",
+    "TXN-0042: INV-2026-0044 partial payment — a second transaction with the same reference would upgrade this to auto_matched via Rule 7."
+  ]
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "invoice",
+    "customer_id": "SHOWCASE-08-CUST-001",
+    "customer_name": "SHOWCASE-08 Acme S.à r.l.",
+    "issue_date": "2026-03-01",
+    "due_date": "2026-03-31",
+    "currency": "EUR",
+    "total": "585.00"
+  }
+]

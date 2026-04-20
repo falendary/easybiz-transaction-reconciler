@@ -1,0 +1,11 @@
+[
+  {
+    "id": "SHOWCASE-10-TXN-2026-0002",
+    "date": "9999-12-31",
+    "amount": "0.00",
+    "currency": "MOON",
+    "counterparty_name": "SHOWCASE-10 Acme S.à r.l.",
+    "structured_reference": "SHOWCASE-10-INV-2026-0002",
+    "description": "definitely a real payment"
+  }
+]

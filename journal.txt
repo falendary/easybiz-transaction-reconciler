@@ -40,8 +40,17 @@ Implementation of Django App
     - Creating showcase-04
 13:10
     - Creating readme, decisions etc
-
-
+13:48
+    - Creating showcase 07
+    - Creating showcase 08
+13:50
+    - Creating showcase 09
+13:54
+    - Adding Redoc / Swagger
+13:56
+    - Adding showcase 10
+14:00
+    - AI Scoring case
 
 [TODO] 13:00 - 14:00
 - Implementing AI Scoring module
