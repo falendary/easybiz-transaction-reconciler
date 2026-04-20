@@ -1,0 +1,11 @@
+[
+  {
+    "id": "SHOWCASE-04-TXN-2026-0002",
+    "date": "2026-02-20",
+    "amount": "285.00",
+    "currency": "EUR",
+    "counterparty_name": "SHOWCASE-04 Acme S.à r.l.",
+    "structured_reference": "SHOWCASE-04-INV-2026-0001",
+    "description": "Partial payment 2/2 — SHOWCASE-04-INV-2026-0001"
+  }
+]

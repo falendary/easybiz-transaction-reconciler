@@ -280,7 +280,35 @@ class TransactionAdmin(admin.ModelAdmin):
         if request.method == "POST":
             action = request.POST.get("action")
             match_id = request.POST.get("match_id")
-            if action and match_id:
+
+            if action == "upload_and_reconcile":
+                f = request.FILES.get("file")
+                if not f:
+                    messages.error(request, "No file selected.")
+                elif f.size > MAX_UPLOAD_BYTES:
+                    messages.error(request, f"File too large ({f.size} bytes). Max 20 MB.")
+                else:
+                    ext = f.name.rsplit(".", 1)[-1].lower() if "." in f.name else ""
+                    try:
+                        raw = f.read().decode("utf-8")
+                        if ext == "json":
+                            summary = ingest_transactions(raw, f.name)
+                        elif ext == "csv":
+                            summary = ingest_payout(raw, f.name)
+                        else:
+                            raise ValueError(f"Unsupported file type '.{ext}'. Expected .json or .csv.")
+                        detail = ", ".join(f"{k}: {v}" for k, v in summary.items())
+                        messages.success(request, f"Uploaded {f.name} — {detail}")
+                        run = run_reconciliation()
+                        messages.success(
+                            request,
+                            f"Reconciliation complete — {run.total_processed} processed, "
+                            f"{run.auto_matched_count} auto-matched, {run.needs_review_count} need review.",
+                        )
+                    except Exception as exc:
+                        messages.error(request, str(exc))
+
+            elif action and match_id:
                 try:
                     match = Match.objects.get(pk=match_id)
                     if action == "confirm":
