@@ -38,7 +38,8 @@ NOISE_COUNTERPARTY_KEYWORDS = [
     "securex", "bcee", "bank fee", "frais bancaire",
 ]
 
-INVOICE_ID_RE = re.compile(r"\b(INV|CN)[-\s]?(\d{4})[-\s]?(\d{4})\b", re.IGNORECASE)
+# Matches bare INV-YYYY-NNNN / CN-YYYY-NNNN and prefixed forms like SHOWCASE-03-INV-YYYY-NNNN.
+INVOICE_ID_RE = re.compile(r"\b((?:[A-Z0-9]+-)*(?:INV|CN)[-\s]?\d{4}[-\s]?\d{4})\b", re.IGNORECASE)
 PAYOUT_ID_RE = re.compile(r"^po_", re.IGNORECASE)
 
 
@@ -84,7 +85,7 @@ def _extract_ids(text: str) -> list[str]:
     """Extract all canonical invoice/credit-note IDs from free text."""
     if not text:
         return []
-    return [f"{p.upper()}-{y}-{n}" for p, y, n in INVOICE_ID_RE.findall(text)]
+    return [_normalize_id(m) for m in INVOICE_ID_RE.findall(text)]
 
 
 def _within_tolerance(txn_amount: Decimal, invoice_total: Decimal) -> bool:
@@ -206,7 +207,11 @@ def _rule5_fx_tolerance(txn: Transaction) -> Optional[list[_Candidate]]:
 
 
 def _rule6_consolidated(txn: Transaction) -> Optional[list[_Candidate]]:
-    """Multiple invoice IDs in description → proportional split."""
+    """Multiple invoice IDs in description → proportional split.
+
+    If the transaction amount exactly equals the sum of all found invoices,
+    confidence is raised to 0.95 (auto_matched). Otherwise 0.75 (needs_review).
+    """
     text = (txn.description or "") + " " + (txn.structured_reference or "")
     ids = _extract_ids(text)
     if len(ids) < 2:
@@ -216,13 +221,20 @@ def _rule6_consolidated(txn: Transaction) -> Optional[list[_Candidate]]:
         return None
 
     total_invoiced = sum(i.total for i in invoices) or Decimal("1")
+    if txn.amount == total_invoiced:
+        conf = Decimal("0.95")
+        txn_status = "auto_matched"
+    else:
+        conf = Decimal("0.75")
+        txn_status = "needs_review"
+
     return [
         _Candidate(
             invoice=inv,
             allocated_amount=(txn.amount * inv.total / total_invoiced).quantize(Decimal("0.01")),
-            confidence=Decimal("0.75"),
+            confidence=conf,
             match_type="consolidated",
-            txn_status="needs_review",
+            txn_status=txn_status,
         )
         for inv in invoices
     ]
