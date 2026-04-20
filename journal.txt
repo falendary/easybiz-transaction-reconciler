@@ -12,6 +12,10 @@ Adding Reviewer Model, Source model
 
 [TODO] 11:00 - 13:00
 Implementation of Django App
+11:00
+    - Creating base Django Project
+11:05
+    - Creating django Models and base user
 
 [TODO] 13:00 - 14:00
 - Implementing AI Scoring module
