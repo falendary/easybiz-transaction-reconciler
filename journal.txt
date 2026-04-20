@@ -9,6 +9,7 @@ Adding User Scenarios document
 Adding Reviewer Model, Source model
 
 
+==== Backend ====
 
 11:00 - 13:00
 Implementation of Django App
@@ -64,7 +65,11 @@ Implementation of Django App
     - fixing critical bugs
     - updating readme
 
-14:35 Creating frontend app
+==== Frontend ====
+
+14:30 Creating frontend app
+14:40 Debugging frontend
+14:45 Manual Testing
 
 
 [TODO] 14:30 - 15:00
