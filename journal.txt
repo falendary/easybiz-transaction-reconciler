@@ -43,6 +43,9 @@ Implementation of Django App
 13:48
     - Creating showcase 07
     - Creating showcase 08
+13:50
+    - Creating showcase 09
+
 
 
 [TODO] 13:00 - 14:00
