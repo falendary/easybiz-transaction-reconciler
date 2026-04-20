@@ -113,7 +113,7 @@
         <th>Invoice</th>
         <th>Match type</th>
         <th>Confidence</th>
-        <th>Note</th>
+        <th>Reason</th>
         <th>Actions</th>
         <th></th>
       </tr>
@@ -154,7 +154,7 @@
             {% endif %}
           {% endwith %}
         </td>
-        <td style="font-size:11px;color:#666">{{ match.note|default:""|truncatechars:40 }}</td>
+        <td style="font-size:11px;color:#666">{{ match.note|default:"—" }}</td>
         <td class="action-btns">
           <form method="post" action="{% url 'admin:reconciler-dashboard' %}">
             {% csrf_token %}

@@ -265,9 +265,15 @@ def _rule7_partial(txn: Transaction) -> Optional[list[_Candidate]]:
     if all_txns_total == invoice.total:
         conf = Decimal("0.95")
         txn_status = "auto_matched"
+        note = ""
     else:
         conf = Decimal("0.75")
         txn_status = "needs_review"
+        note = (
+            f"Partial payment: this transaction {txn.amount}, "
+            f"invoice total {invoice.total}, "
+            f"all payments so far {all_txns_total}"
+        )
 
     return [_Candidate(
         invoice=invoice,
@@ -275,6 +281,7 @@ def _rule7_partial(txn: Transaction) -> Optional[list[_Candidate]]:
         confidence=conf,
         match_type="partial",
         txn_status=txn_status,
+        note=note,
     )]
 
 
@@ -385,6 +392,7 @@ def _process_transaction(txn: Transaction) -> str:
             confidence_score=Decimal("0.0"),
             match_type="exact",
             status="needs_review",
+            note="No matching invoice found",
         )
         txn.reconciliation_status = "needs_review"
         txn.save(update_fields=["reconciliation_status"])

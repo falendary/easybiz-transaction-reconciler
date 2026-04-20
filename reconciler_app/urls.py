@@ -1,17 +1,14 @@
 from django.contrib import admin
-from django.urls import path, include
-from django.views.generic import RedirectView
+from django.http import HttpResponseRedirect
+from django.urls import path, include, reverse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 
-class _AdminIndexRedirect(RedirectView):
-    permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        return "/admin/reconciler/transaction/dashboard/"
+def _admin_index(request, extra_context=None):
+    return HttpResponseRedirect(reverse("admin:reconciler-dashboard"))
 
 
-admin.site.__class__.index = lambda self, request, extra_context=None: _AdminIndexRedirect.as_view()(request)
+admin.site.index = _admin_index
 
 urlpatterns = [
     path("admin/", admin.site.urls),
