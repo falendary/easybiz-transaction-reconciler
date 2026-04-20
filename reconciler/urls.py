@@ -8,6 +8,9 @@ from reconciler.views import (
     CustomerViewSet,
     FXRateViewSet,
     IngestionEventViewSet,
+    IngestInvoicesView,
+    IngestPayoutView,
+    IngestTransactionsView,
     InvoiceViewSet,
     MatchViewSet,
     ReconciliationRunViewSet,
@@ -29,5 +32,8 @@ router.register(r"reconcile/runs", ReconciliationRunViewSet, basename="reconcili
 
 urlpatterns = [
     path("health/", health_check, name="health"),
+    path("ingest/invoices/", IngestInvoicesView.as_view(), name="ingest-invoices"),
+    path("ingest/transactions/", IngestTransactionsView.as_view(), name="ingest-transactions"),
+    path("ingest/payout/", IngestPayoutView.as_view(), name="ingest-payout"),
     path("", include(router.urls)),
 ]
