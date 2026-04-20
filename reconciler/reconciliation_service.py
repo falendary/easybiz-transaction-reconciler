@@ -453,6 +453,9 @@ def run_reconciliation() -> ReconciliationRun:
     Raises:
         Exception: propagated if an unexpected error occurs; run.status set to 'failed'.
     """
+    if ReconciliationRun.objects.filter(status="running").exists():
+        raise ValueError("A reconciliation run is already in progress.")
+
     run = ReconciliationRun.objects.create(status="running")
 
     transactions = Transaction.objects.filter(locked_by_user=False).order_by("date", "transaction_id")

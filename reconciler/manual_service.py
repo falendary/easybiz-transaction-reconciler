@@ -30,7 +30,7 @@ def _derive_txn_status(txn: Transaction) -> str:
     active = txn.matches.exclude(status="rejected")
     if not active.exists():
         return "needs_review"
-    if active.filter(status="duplicate").exists():
+    if active.filter(match_type="duplicate").exists():
         return "duplicate"
     if active.filter(status="unrelated").exists():
         return "unrelated"

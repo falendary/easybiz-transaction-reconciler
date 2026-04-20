@@ -178,3 +178,13 @@ These edge cases were identified during planning but deferred due to time constr
 - **Email / webhook notifications** — no alerts when matches need review or reconciliation completes.
 - **Audit log for manual actions** — `performed_by` / `performed_at` fields exist on `Match` but are not surfaced in the Admin dashboard.
 
+## Known backend issues (low priority / future fixes)
+
+| Issue | Location | Impact |
+|---|---|---|
+| `mark_unrelated` note is optional — spec says mandatory | `manual_service.py`, `MatchActionSerializer` | Reviewer can skip justification |
+| Manual match creation doesn't validate invoice is open | `manual_service.py:create_manual_match` | API allows matching against a paid invoice |
+| `Transaction.reconciliation_status` never becomes `"confirmed"` — stays `"auto_matched"` after human confirmation | `manual_service.py:_derive_txn_status` | Dashboard can't distinguish confirmed vs auto |
+| Rule 8 and Rule 10 use `match_type="exact"` for fuzzy/no-match cases | `reconciliation_service.py` | Misleading match type label in API output |
+| Rule 8 fuzzy loads all open invoices per transaction (N+1 risk at scale) | `reconciliation_service.py:_rule8_fuzzy` | Fine for ≤200 invoices; degrades beyond |
+
