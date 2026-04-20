@@ -304,8 +304,12 @@ class TransactionAdmin(admin.ModelAdmin):
                 redirect_url += "?" + urlencode(params)
             return HttpResponseRedirect(redirect_url)
 
-        date_from = request.GET.get("date_from", "")
-        date_to = request.GET.get("date_to", "")
+        from django.db.models import Q
+
+        from datetime import date, timedelta
+        today = date.today()
+        date_from = request.GET.get("date_from") or (today - timedelta(days=2)).isoformat()
+        date_to = request.GET.get("date_to") or today.isoformat()
         customer_id = request.GET.get("customer", "")
 
         base_qs = Match.objects.select_related(
@@ -316,14 +320,28 @@ class TransactionAdmin(admin.ModelAdmin):
             base_qs = base_qs.filter(transaction__date__gte=date_from)
         if date_to:
             base_qs = base_qs.filter(transaction__date__lte=date_to)
-        if customer_id:
-            base_qs = base_qs.filter(invoice__customer__customer_id=customer_id)
+
+        # Customer filter applied differently per table:
+        # - reconciled matches always have an invoice → filter via invoice→customer
+        # - needs_review matches may have invoice=null (no rule matched), so also
+        #   check raw_counterparty against the customer name as a fallback
+        customer_obj = Customer.objects.filter(customer_id=customer_id).first() if customer_id else None
+        if customer_obj:
+            by_invoice = Q(invoice__customer__customer_id=customer_id)
+            by_counterparty = Q(invoice__isnull=True, transaction__raw_counterparty__icontains=customer_obj.name)
+            needs_review_filter = by_invoice | by_counterparty
+            reconciled_filter = by_invoice
+        else:
+            needs_review_filter = Q()
+            reconciled_filter = Q()
 
         needs_review = list(
-            base_qs.filter(status="needs_review").order_by("transaction__date", "transaction_id")[:200]
+            base_qs.filter(status="needs_review").filter(needs_review_filter)
+            .order_by("transaction__date", "transaction_id")[:200]
         )
         reconciled = list(
             base_qs.filter(status__in=["auto_matched", "confirmed", "manually_matched"])
+            .filter(reconciled_filter)
             .order_by("-transaction__date")[:200]
         )
         customers = Customer.objects.order_by("name")

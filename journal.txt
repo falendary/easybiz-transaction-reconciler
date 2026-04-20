@@ -29,7 +29,10 @@ Implementation of Django App
 12:00
     - Creating Django Admin Dashboard/Homepage to user to reconcile data
 12:10
-    - Creating showcases
+    - Creating showcases-00
+12:26
+    - Creating showcase-01
+
 
 [TODO] 13:00 - 14:00
 - Implementing AI Scoring module

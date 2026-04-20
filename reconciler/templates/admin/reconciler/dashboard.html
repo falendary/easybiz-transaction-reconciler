@@ -101,6 +101,7 @@
         <th>Confidence</th>
         <th>Note</th>
         <th>Actions</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -151,6 +152,9 @@
             <button name="action" value="reject"    class="btn-reject"   title="Reject this match">✗ Reject</button>
             <button name="action" value="unrelated" class="btn-unrelated" title="Mark as unrelated">~ Unrelated</button>
           </form>
+        </td>
+        <td>
+          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit" title="Edit match #{{ match.pk }}">#{{ match.pk }}</a>
         </td>
       </tr>
       {% endfor %}
@@ -219,7 +223,7 @@
           {% endwith %}
         </td>
         <td>
-          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit">Edit</a>
+          <a href="{% url 'admin:reconciler_match_change' match.pk %}" class="btn-edit">#{{ match.pk }} Edit</a>
         </td>
       </tr>
       {% endfor %}
