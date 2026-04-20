@@ -13,6 +13,7 @@ from reconciler.views import (
     IngestTransactionsView,
     InvoiceViewSet,
     MatchViewSet,
+    ReconcileView,
     ReconciliationRunViewSet,
     TransactionViewSet,
     health_check,
@@ -35,5 +36,6 @@ urlpatterns = [
     path("ingest/invoices/", IngestInvoicesView.as_view(), name="ingest-invoices"),
     path("ingest/transactions/", IngestTransactionsView.as_view(), name="ingest-transactions"),
     path("ingest/payout/", IngestPayoutView.as_view(), name="ingest-payout"),
+    path("reconcile/", ReconcileView.as_view(), name="reconcile"),
     path("", include(router.urls)),
 ]
