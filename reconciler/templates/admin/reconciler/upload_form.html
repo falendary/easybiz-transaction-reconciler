@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo;
+  <a href="{% url 'admin:reconciler_ingestionevent_changelist' %}">Ingestion Events</a> &rsaquo;
+  {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+{% if result %}
+  <div class="{% if result.status == 'success' %}success{% else %}errornote{% endif %}" style="padding:12px;margin-bottom:16px;border-radius:4px;background:{% if result.status == 'success' %}#dfd{% else %}#fdd{% endif %}">
+    <strong>{{ result.status|upper }}</strong> — {{ result.message }}
+    {% if result.detail %}
+      <pre style="margin:8px 0 0;font-size:12px">{{ result.detail }}</pre>
+    {% endif %}
+  </div>
+{% endif %}
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <fieldset class="module aligned">
+    <div class="form-row">
+      <label for="file">{{ file_label }}:</label>
+      <input type="file" name="file" id="file" accept="{{ accept }}" required>
+      <p class="help">{{ help_text }}</p>
+    </div>
+  </fieldset>
+  <div class="submit-row">
+    <input type="submit" value="Upload" class="default">
+    <a href="{% url 'admin:reconciler_ingestionevent_changelist' %}" style="margin-left:10px">Cancel</a>
+  </div>
+</form>
+{% endblock %}
