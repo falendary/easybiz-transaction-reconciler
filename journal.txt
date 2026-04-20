@@ -2,8 +2,26 @@
 9:00 - 10:00
 Task assigment research and plan proposition
 
-10:00 - 10:30
+10:00 - 10:45
 Creating implementation plan and drafting core models and logic
 Creating API Endpoints schema
+Adding User Scenarios document
+Adding Reviewer Model, Source model
 
 
+
+[TODO] 11:00 - 13:00
+Implementation of Django App
+
+[TODO] 13:00 - 14:00
+- Implementing AI Scoring module
+
+[TODO] 14:00 - 15:00
+Implementing Frontend React app
+
+[TODO] 14:30 - 15:00
+Test app manually, update readme and guides
+
+[TODO] 15:00
+Record A Demo Video
+Send email and link with github

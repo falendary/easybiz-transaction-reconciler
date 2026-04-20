@@ -13,6 +13,8 @@ All monetary values use `DecimalField(max_digits=12, decimal_places=2)`.
 All currency fields are FK to `Currency` — never a raw CharField.
 `Invoice.status` is always recomputed from Match records — never set directly.
 `AccountEntry` records are created automatically via Django signals on Match save — never manually.
+`Responsible` extends Django's built-in `User` via OneToOneField — authentication is handled by Django auth.
+`Source` is a reference table seeded from a fixture — adding a new integration requires a data migration, not a code change.
 
 ---
 
@@ -32,8 +34,52 @@ created_at         DateTimeField(auto_now_add=True)
 
 ---
 
+### `Source`
+Origin system that produced the data. Seeded via fixture on first migration.
+Determines which parser is used during ingestion and provides traceability per record.
+
+```
+name            CharField(unique=True)   # "Stripe", "Demo CRM", "ING Bank"
+source_type     CharField                # choices: bank | payment_processor | crm | erp | manual
+description     TextField(null=True)
+is_active       BooleanField(default=True)
+created_at      DateTimeField(auto_now_add=True)
+```
+
+Seed values:
+```
+name="Stripe"      source_type="payment_processor"
+name="Demo CRM"    source_type="crm"
+name="ING Bank"    source_type="bank"
+```
+
+---
+
+### `Responsible`
+Profile extension for Django's built-in User model.
+Tracks who performed manual reconciliation actions.
+System-generated matches have no responsible — only human actions carry one.
+
+```
+user            OneToOneField(django.contrib.auth.User)
+display_name    CharField    # "Marie Lambert"
+role            CharField    # choices: reviewer | admin
+created_at      DateTimeField(auto_now_add=True)
+```
+
+Used on:
+```
+Match.performed_by          FK to Responsible, null=True  (null = system action)
+Match.performed_at          DateTimeField, null=True
+Invoice.force_closed_by     FK to Responsible, null=True
+Invoice.force_closed_at     DateTimeField, null=True
+```
+
+---
+
 ### `IngestionEvent`
 Records every file upload. Stores raw content for reprocessing and audit.
+Links to the Source that produced the file.
 
 ```
 file_type          CharField  # choices: invoices | transactions | payout
@@ -42,6 +88,7 @@ uploaded_at        DateTimeField(auto_now_add=True)
 raw_content        TextField  # original file content verbatim
 status             CharField  # choices: pending | success | failed
 error_message      TextField(null=True, blank=True)
+source             ForeignKey(Source)
 ```
 
 ---
@@ -128,6 +175,9 @@ tax_total          DecimalField
 total              DecimalField
 status             CharField  # choices: open | partially_paid | paid | force_closed
 force_close_note   TextField(null=True, blank=True)
+force_closed_by    ForeignKey(Responsible, null=True)
+force_closed_at    DateTimeField(null=True)
+source             ForeignKey(Source, null=True)   # derived from IngestionEvent
 ingestion_event    ForeignKey(IngestionEvent)
 created_at         DateTimeField(auto_now_add=True)
 ```
@@ -183,6 +233,7 @@ description            TextField(null=True)
 is_duplicate           BooleanField(default=False)
 reconciliation_status  CharField  # choices: unprocessed | auto_matched | needs_review | reconciled | unrelated | duplicate
 locked_by_user         BooleanField(default=False)
+source                 ForeignKey(Source, null=True)   # derived from IngestionEvent
 ingestion_event        ForeignKey(IngestionEvent)
 created_at             DateTimeField(auto_now_add=True)
 ```
@@ -230,6 +281,8 @@ confidence_score   DecimalField   # 0.00 – 1.00
 match_type         CharField      # choices: exact | partial | consolidated | fx | credit_note | payout | noise | duplicate | prepayment
 status             CharField      # choices: auto_matched | needs_review | confirmed | manually_matched | rejected | unrelated
 locked_by_user     BooleanField(default=False)
+performed_by       ForeignKey(Responsible, null=True)   # null = system action
+performed_at       DateTimeField(null=True)
 note               TextField(null=True, blank=True)
 created_at         DateTimeField(auto_now_add=True)
 updated_at         DateTimeField(auto_now=True)
@@ -296,21 +349,25 @@ error_message           TextField(null=True, blank=True)
 ## Relationship Map
 
 ```
-Currency  ←──────────────────────────────────────────┐
-                                                      │ (all currency fields)
-IngestionEvent ←── Invoice ──→ Customer ──→ Account   │
-                      │           │                   │
-               InvoiceLineItem    └──→ Counterparty   │
-                                                      │
-IngestionEvent ←── Transaction ──→ Counterparty       │
-                      │                               │
-                  PayoutLine                          │
-                      │                               │
-                    Match ──────────────→ AccountEntry│
-                      ↑                               │
-              ReconciliationRun                       │
-                                                      │
-FXRate ───────────────────────────────────────────────┘
+Currency  ←──────────────────────────────────────────────┐
+                                                          │ (all currency fields)
+Source    ←── IngestionEvent ←── Invoice ──→ Customer ──→ Account
+                                    │           │
+                             InvoiceLineItem    └──→ Counterparty
+                                    │
+                             force_closed_by ──→ Responsible ←── django.auth.User
+                                                      ↑
+Source    ←── IngestionEvent ←── Transaction ──→ Counterparty
+                                    │
+                                PayoutLine
+                                    │
+                                  Match ──→ performed_by ──→ Responsible
+                                    │
+                             AccountEntry ──→ Account
+                                    ↑
+                          ReconciliationRun
+
+FXRate ──→ Currency (base + quote)
 ```
 
 ---
@@ -325,3 +382,7 @@ FXRate ────────────────────────�
 6. Every Transaction must eventually have its `allocated_amount` fully accounted for across its Match records
 7. `force_close_note` is mandatory when an invoice is force-closed by a human
 8. Stripe payout lines of type `refund` or `chargeback` always go to `needs_review` — never auto-matched
+9. `Match.performed_by` and `Invoice.force_closed_by` are null for system actions — only human actions carry a Responsible
+10. `Invoice.source` and `Transaction.source` are derived from their `IngestionEvent.source` on ingestion — never set independently
+11. `Source` and `Currency` are reference tables — adding new values requires a data migration, not a code change
+12. `Responsible` is always linked to a Django auth `User` — no orphan Responsible records
